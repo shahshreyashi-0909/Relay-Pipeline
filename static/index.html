@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relay · Content Repurposing Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<div class="app">
+  <header class="appbar">
+    <div class="brand"><span class="brand-mark"></span><span class="brand-name">Relay</span><span class="brand-sub">Repurposing pipeline</span></div>
+    <nav class="tabs" id="main-tabs">
+      <button class="tab active" data-view="setup">New job</button>
+      <button class="tab" data-view="workspace" disabled>Workspace</button>
+      <button class="tab" data-view="jobs">History</button>
+    </nav>
+    <div class="appbar-right">
+      <div class="engine" id="engine"><span class="dot"></span><span id="engine-text">Checking engine…</span></div>
+      <div class="menu" id="export-menu" hidden>
+        <button class="btn ghost" id="export-btn">Export ▾</button>
+        <div class="menu-list" id="export-list" hidden>
+          <a id="exp-md" href="#">Markdown (.md)</a>
+          <a id="exp-json" href="#">JSON with trace (.json)</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- SETUP -->
+  <section class="view active" id="view-setup">
+    <div class="setup">
+      <div class="card source-card">
+        <div class="card-head"><h2>Source material</h2><button class="btn link" id="load-sample">Load sample case study</button></div>
+        <div class="seg" id="source-mode">
+          <button class="seg-btn active" data-mode="text">Paste text</button>
+          <button class="seg-btn" data-mode="url">From URL</button>
+        </div>
+        <label>Title (optional)<input id="f-title" placeholder="Approved blog, case study or product page title"></label>
+        <label id="text-wrap">Approved text<textarea id="f-text" rows="14" placeholder="Paste the approved blog post, case study or product page here. Facts will be extracted and every generated line will be traced back to a sentence."></textarea></label>
+        <label id="url-wrap" hidden>Page URL<input id="f-url" placeholder="https://example.com/blog/case-study"></label>
+        <div class="hint" id="source-stats"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Brand voice</h2>
+          <div class="row"><select id="voice-select"><option value="">Saved profiles…</option></select><button class="btn ghost small" id="voice-save">Save profile</button></div>
+        </div>
+        <label>Profile name<input id="v-name" placeholder="e.g. Northwind house style"></label>
+        <label>Tone<input id="v-tone" placeholder="e.g. warm, practical, no hype"></label>
+        <div class="two">
+          <label>Point of view<select id="v-pov"><option value="we">We (company)</option><option value="I">I (founder / personal)</option><option value="third">Third person</option></select></label>
+          <label>Emoji<select id="v-emoji"><option value="none">None</option><option value="light">Light (1–2)</option><option value="free">Free</option></select></label>
+        </div>
+        <label>Reading level<input id="v-reading" placeholder="plain, short sentences"></label>
+        <label>Audience<input id="v-audience" placeholder="e.g. retail operations leaders"></label>
+        <label>Preferred terms <span class="muted-inline">comma separated</span><input id="v-preferred" placeholder="Guided Setup, retail teams"></label>
+        <label>Banned words &amp; phrases <span class="muted-inline">comma separated</span><input id="v-banned" placeholder="game-changing, revolutionary, unlock, synergy"></label>
+      </div>
+
+      <div class="card run-card">
+        <h2>Outputs</h2>
+        <div class="chips">
+          <label class="chip"><input type="checkbox" value="linkedin" checked>LinkedIn post</label>
+          <label class="chip"><input type="checkbox" value="instagram" checked>Instagram carousel</label>
+          <label class="chip"><input type="checkbox" value="video" checked>Short-video script</label>
+        </div>
+        <ol class="pipeline-steps">
+          <li><b>Ingest</b> split into sentences, find numbers &amp; names</li>
+          <li><b>Extract facts</b> atomic claims with sentence ids</li>
+          <li><b>Generate</b> per platform, in the brand voice, citing facts</li>
+          <li><b>Trace</b> verify every line against the source</li>
+          <li><b>Enforce voice</b> banned words, tone, readability, limits</li>
+        </ol>
+        <button class="btn primary big" id="run-btn">Run pipeline</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKSPACE -->
+  <section class="view" id="view-workspace">
+    <div class="ws-head">
+      <div><div class="ws-title" id="ws-title"></div><div class="ws-meta" id="ws-meta"></div></div>
+      <div class="scores" id="scores"></div>
+    </div>
+    <div class="workspace">
+      <div class="pane source-pane">
+        <div class="pane-tabs"><button class="ptab active" data-ptab="source">Source</button><button class="ptab" data-ptab="facts">Fact register</button><button class="ptab" data-ptab="matrix">Trace matrix</button></div>
+        <div class="pane-body" id="source-body"></div>
+        <div class="pane-body" id="facts-body" hidden></div>
+        <div class="pane-body" id="matrix-body" hidden></div>
+      </div>
+      <div class="pane draft-pane">
+        <div class="pane-tabs" id="platform-tabs"></div>
+        <div class="draft-toolbar">
+          <div class="legend"><span><i class="v supported"></i>Supported</span><span><i class="v partial"></i>Partial</span><span><i class="v unsupported"></i>Unsupported</span><span><i class="v neutral"></i>No claim</span></div>
+          <div class="row">
+            <input id="regen-instr" placeholder="Optional instruction, e.g. lead with the pricing">
+            <button class="btn ghost" id="regen-btn">↻ Regenerate</button>
+            <button class="btn primary" id="recheck-btn" hidden>Re-check edits</button>
+          </div>
+        </div>
+        <div class="pane-body" id="draft-body"></div>
+        <div class="checks" id="checks"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- JOBS -->
+  <section class="view" id="view-jobs">
+    <div class="card narrow"><h2>Past jobs</h2><div id="jobs-list" class="jobs"></div></div>
+  </section>
+
+  <div class="overlay" id="overlay" hidden>
+    <div class="overlay-card"><div class="spinner"></div><div class="overlay-title">Running the pipeline</div>
+      <ol class="steps" id="ov-steps"><li>Ingesting source</li><li>Extracting facts</li><li>Writing drafts</li><li>Tracing claims</li><li>Checking brand voice</li></ol></div>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>
